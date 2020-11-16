@@ -8,11 +8,13 @@ APP_ROOT = os.path.join(os.path.dirname(__file__), '..')   # refers to applicati
 dotenv_path = os.path.join(APP_ROOT, '.env')
 load_dotenv(dotenv_path)
 
-mongo = os.getenv('MONGO')
+#mongo = os.getenv('MONGO')
+
+mongo = "mongodb+srv://agorny:Ambition33**@cluster0.m1dmf.mongodb.net/RecipeApp?retryWrites=true&w=majority"
 
 client = pymongo.MongoClient(mongo)
 
-db = client['recipe_app']
+db = client['RecipeApp']
 
 users = db['users']
 roles = db['roles']
@@ -69,7 +71,7 @@ def initial_database():
     user = add_role('user')
 
     # add users
-    mike = add_user('Mike', 'Colbert', 'mike@mike.com', 'abc123', 'admin')
+    mike = add_user('Aidan', 'Gorny', 'aidan@aidan.com', 'abc123', 'admin')
 
     # add categories
     main = add_category('Main dishes')
@@ -79,7 +81,7 @@ def initial_database():
    
     # add recipe
     chicken_parmesean = add_recipe('Chicken Parmesean', 'Main dishes',
-                                   'chicken', 'cook it good', 'cook it real good', 'Mike', 'Colbert')
+                                   'chicken', 'cook it good', 'cook it real good', 'Aidan', 'Gorny')
 
 
 def main():
