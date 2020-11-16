@@ -8,9 +8,7 @@ APP_ROOT = os.path.join(os.path.dirname(__file__), '..')   # refers to applicati
 dotenv_path = os.path.join(APP_ROOT, '.env')
 load_dotenv(dotenv_path)
 
-#mongo = os.getenv('MONGO')
-
-mongo = "mongodb+srv://agorny:Ambition33**@cluster0.m1dmf.mongodb.net/RecipeApp?retryWrites=true&w=majority"
+mongo = os.getenv('MONGO')
 
 client = pymongo.MongoClient(mongo)
 
