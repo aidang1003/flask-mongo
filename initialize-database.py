@@ -10,6 +10,7 @@ load_dotenv(dotenv_path)
 
 mongo = os.getenv('MONGO')
 
+
 client = pymongo.MongoClient(mongo)
 
 db = client['RecipeApp']

@@ -20,7 +20,7 @@ mongo = os.getenv('MONGO')
 
 client = pymongo.MongoClient(mongo)
 
-db = client['recipe_app'] # Mongo collection
+db = client['RecipeApp'] # Mongo collection
 users = db['users'] # Mongo document
 roles = db['roles'] # Mongo document
 
@@ -100,7 +100,6 @@ def login():
 
     if request.method == 'POST':
         user = users.find_one({"email": request.form['username']})
-        print(user['email'])
         if user and user['password'] == request.form['password']:
             user_obj = User(username=user['email'], role=user['role'], id=user['_id'])
             login_user(user_obj)
