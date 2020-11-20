@@ -173,8 +173,6 @@ def admin_add_user():
     if request.method == 'POST':
         form = request.form
         
-        password = request.form['password']
-        
         email = users.find_one({"email": request.form['email']})
         if email:
             flash('This email is already registered.', 'warning')
@@ -183,7 +181,7 @@ def admin_add_user():
             'first_name': form['first_name'],
             'last_name': form['last_name'],
             'email': form['email'],
-            'password': password,
+            'password': form['password'],
             'role': form['role'],
             'date_added': datetime.datetime.now(),
             'date_modified': datetime.datetime.now()
@@ -250,13 +248,76 @@ def admin_recipes():
     return render_template('recipe-admin.html', all_categories=categories.find(), all_recipes=recipes.find())
 
 
-@app.route('/recipes/add-recipe', methods=['POST'])
+
+
+
+#make first name and last name belong to users that added the recipe
+#make category a drop down menu for the categories that are available
+@app.route('/recipes/add-recipe', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin', 'contributor')
 def add_recipe():
-    return 'Add new recipe to database.'
+    if request.method == 'POST':
+        form = request.form
+        
+        recipe_name = recipes.find_one({"recipe_name": request.form['recipe_name']})
+        if recipe_name:
+            flash('This recipe is already registered.', 'warning')
+            return 'This recipe has already been registered.'
+    
+        new_recipe = {
+            'recipe_name': form['recipe_name'],
+            'category': form['category'],
+            'ingredients': form['ingredients'],
+            'preperation': form['preperation'],
+            'notes': form['notes'],
+            'first_name': 'a',
+            'last_name': 'g',
+            'date_added': datetime.datetime.now(),
+            'date_modified': datetime.datetime.now()
+        }
+        recipes.insert_one(new_recipe)
+        flash(new_recipe['recipe_name'] + ' recipe has been added.', 'success')
+        return redirect(url_for('admin_recipes'))
+    return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
 
 
+
+
+
+@app.route('/recipes/add-category', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def add_category():
+    return 'Add new category to database.'
+
+
+#not working yet
+@app.route('/recipes/delete-category', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def delete_category():
+    delete_category = categories.find_one({'_id': CategoryId(user_id)})
+    if delete_category:
+        users.delete_one(delete_category)
+        flash(delete_category['category_name'] + ' has been deleted.', 'warning')
+        return redirect(url_for('admin_recipes'))
+    flash('User not found.', 'warning')
+    return redirect(url_for('admin_recipes'))
+
+
+
+@app.route('/recipes/edit-recipe', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def edit_recipe():
+    return 'Edit a recipe in the database.'
+
+@app.route('/recipes/delete-recipe', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def delete_recipe():
+    return 'Delete a recipe in the database.'
 
 
 if __name__ == "__main__":
