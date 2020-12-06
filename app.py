@@ -289,7 +289,19 @@ def add_recipe():
 @login_required
 @roles_required('admin', 'contributor')
 def add_category():
-    return 'Add new category to database.'
+    if request.method == 'POST':
+        form = request.form
+
+        category_name = categories.find_one({"category_name": request.form['category_name']})
+        if category_name:
+            flash('This category is already registered.', 'warning')
+            return 'This category has already been registered.'
+
+        new_category = {'category_name': form['category_name']}
+        categories.insert_one(new_category)
+        flash(new_category['category_name'] + ' category has been added', 'success')
+        return redirect(url_for('admin_recipes'))
+    return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
 
 
 #not working yet
