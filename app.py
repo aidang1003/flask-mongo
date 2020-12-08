@@ -243,7 +243,7 @@ def admin_update_user(user_id):
 
 @app.route('/recipes/recipes', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin')
+@roles_required('admin', 'contributor', 'user')
 def admin_recipes():
     return render_template('recipe-admin.html', all_categories=categories.find(), all_recipes=recipes.find())
 
@@ -335,7 +335,7 @@ def delete_recipe(recipe_id):
 ##############      Categories     ###############
 @app.route('/recipes/categories', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin')
+@roles_required('admin', 'contributor', 'user')
 def admin_categories():
     return render_template('categories-admin.html', all_categories=categories.find())
 
