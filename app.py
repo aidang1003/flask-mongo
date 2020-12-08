@@ -282,7 +282,25 @@ def add_recipe():
     return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
 
 
+@app.route('/recipes/edit-recipe', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def edit_recipe():
+    return 'Edit a recipe in the database.'
 
+
+@app.route('/recipes/delete-recipe', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def delete_recipe():
+    return 'Delete a recipe in the database.'
+
+
+@app.route('/recipes/categories', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def admin_categories():
+    return render_template('categories-admin.html', all_categories=categories.find())
 
 
 @app.route('/recipes/add-category', methods=['POST'])
@@ -304,32 +322,31 @@ def add_category():
     return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
 
 
-#not working yet
-@app.route('/recipes/delete-category', methods=['POST'])
+@app.route('/recipes/delete-category/<category_id>', methods=['POST'])
 @login_required
 @roles_required('admin', 'contributor')
-def delete_category():
-    delete_category = categories.find_one({'_id': CategoryId(user_id)})
+def delete_category(category_id):
+    delete_category = categories.find_one({'_id': ObjectId(category_id)})
     if delete_category:
-        users.delete_one(delete_category)
+        categories.delete_one(delete_category)
         flash(delete_category['category_name'] + ' has been deleted.', 'warning')
         return redirect(url_for('admin_recipes'))
     flash('User not found.', 'warning')
     return redirect(url_for('admin_recipes'))
 
 
-
-@app.route('/recipes/edit-recipe', methods=['POST'])
+@app.route('/recipes/edit-category/<category_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin', 'contributor')
-def edit_recipe():
-    return 'Edit a recipe in the database.'
+def edit_category(category_id):
+    edit_category = categories.find_one({'_id': ObjectId(category_id)})
+    if edit_categpry:
+        return render_template('edit-category.html', user=edit_category, all_roles=roles.find())
+    flash('Category not found.', 'warning')
+    return redirect(url_for('recipe-admin'))
 
-@app.route('/recipes/delete-recipe', methods=['POST'])
-@login_required
-@roles_required('admin', 'contributor')
-def delete_recipe():
-    return 'Delete a recipe in the database.'
+
+
 
 
 if __name__ == "__main__":
