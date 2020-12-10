@@ -35,13 +35,15 @@ def load_user(username):
     u = users.find_one({"email": username})
     if not u:
         return None
-    return User(username=u['email'], role=u['role'], id=u['_id'])
+    return User(username=u['email'], role=u['role'], id=u['_id'], first_name=u["first_name"], last_name=u['last_name'])
 
 class User:
-    def __init__(self, id, username, role):
+    def __init__(self, id, username, role, first_name, last_name):
         self._id = id
         self.username = username
         self.role = role
+        self.first_name = first_name
+        self.last_name = last_name
 
     @staticmethod
     def is_authenticated():
@@ -102,7 +104,7 @@ def login():
     if request.method == 'POST':
         user = users.find_one({"email": request.form['username']})
         if user and user['password'] == request.form['password']:
-            user_obj = User(username=user['email'], role=user['role'], id=user['_id'])
+            user_obj = User(username=user['email'], role=user['role'], id=user['_id'], first_name=user["first_name"], last_name=user['last_name'])
             login_user(user_obj)
             next_page = request.args.get('next')
 
@@ -268,10 +270,10 @@ def add_recipe():
             'recipe_name': form['recipe_name'],
             'category': form['category'],
             'ingredients': form['ingredients'],
-            'preperation': form['preperation'],
+            'preparation': form['preparation'],
             'notes': form['notes'],
-            'first_name': 'a',
-            'last_name': 'g',
+            'first_name': form["first_name"],
+            'last_name': form['last_name'],
             'date_added': datetime.datetime.now(),
             'date_modified': datetime.datetime.now()
         }
@@ -292,29 +294,31 @@ def edit_recipe(recipe_id):
     return redirect(url_for('admin_recipes'))
 
 
-#submit button not working
-@app.route('/recipes/edit-recipe/<recipe_id>', methods=['GET', 'POST'])
+@app.route('/recipes/update-recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin', 'contributor')
 def update_recipe(recipe_id):
+    print('inside update recipe')
     if request.method == 'POST':
+        
         form = request.form
-
+        
         recipes.update({'_id': ObjectId(recipe_id)},
             {
             'recipe_name': form['recipe_name'],
             'category': form['category'],
             'ingredients': form['ingredients'],
-            'preperation': form['preperation'],
+            'preparation': form['preparation'],
             'notes': form['notes'],
-            'first_name': 'a',
-            'last_name': 'g',
+            'first_name': form['first_name'],
+            'last_name': form['last_name'],
+            'date_added': form['date_added'],
             'date_modified': datetime.datetime.now()
             })
         update_recipe = recipes.find_one({'_id': ObjectId(recipe_id)})
         flash(update_recipe['recipe_name'] + ' has been updated.', 'success')
         return redirect(url_for('admin_recipes'))
-    return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
+    return render_template('recipe-admin.html', all_roles=roles.find(), all_recipes=recipes.find())
 
 
 @app.route('/recipes/delete-recipe/<recipe_id>', methods=['POST'])
