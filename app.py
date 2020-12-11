@@ -20,10 +20,11 @@ mongo = os.getenv('MONGO')
 
 client = pymongo.MongoClient(mongo)
 
-db = client['recipe_app'] # Mongo collection
+db = client['RecipeApp'] # Mongo collection
 users = db['users'] # Mongo document
 roles = db['roles'] # Mongo document
-
+categories = db['categories']
+recipes = db['recipes']
 
 login = LoginManager()
 login.init_app(app)
@@ -34,13 +35,15 @@ def load_user(username):
     u = users.find_one({"email": username})
     if not u:
         return None
-    return User(username=u['email'], role=u['role'], id=u['_id'])
+    return User(username=u['email'], role=u['role'], id=u['_id'], first_name=u["first_name"], last_name=u['last_name'])
 
 class User:
-    def __init__(self, id, username, role):
+    def __init__(self, id, username, role, first_name, last_name):
         self._id = id
         self.username = username
         self.role = role
+        self.first_name = first_name
+        self.last_name = last_name
 
     @staticmethod
     def is_authenticated():
@@ -100,9 +103,8 @@ def login():
 
     if request.method == 'POST':
         user = users.find_one({"email": request.form['username']})
-        print(user['email'])
         if user and user['password'] == request.form['password']:
-            user_obj = User(username=user['email'], role=user['role'], id=user['_id'])
+            user_obj = User(username=user['email'], role=user['role'], id=user['_id'], first_name=user["first_name"], last_name=user['last_name'])
             login_user(user_obj)
             next_page = request.args.get('next')
 
@@ -112,7 +114,7 @@ def login():
             flash("Logged in successfully!", category='success')
             return redirect(request.args.get("next") or url_for("index"))
 
-        flash("Wrong username or password!", category='error')
+        flash("Wrong username or password!", category='danger')
     return render_template('login.html')
 
 
@@ -153,7 +155,7 @@ def update_myaccount(user_id):
             'date_modified': datetime.datetime.now()
             })
         update_account = users.find_one({'_id': ObjectId(user_id)})
-        flash(update_account['email'] + ' has been modified.', 'success')
+        flash(update_account['email'] + ' has been updated.', 'success')
         return redirect(url_for('index'))
     return redirect(url_for('index'))
 
@@ -164,7 +166,7 @@ def update_myaccount(user_id):
 @login_required
 @roles_required('admin')
 def admin_users():
-    return render_template('users.html', all_roles=roles.find(), all_users=users.find())
+    return render_template('user-admin.html', all_roles=roles.find(), all_users=users.find())
 
 @app.route('/admin/add-user', methods=['GET', 'POST'])
 @login_required
@@ -172,8 +174,6 @@ def admin_users():
 def admin_add_user():
     if request.method == 'POST':
         form = request.form
-        
-        password = request.form['password']
         
         email = users.find_one({"email": request.form['email']})
         if email:
@@ -183,7 +183,7 @@ def admin_add_user():
             'first_name': form['first_name'],
             'last_name': form['last_name'],
             'email': form['email'],
-            'password': password,
+            'password': form['password'],
             'role': form['role'],
             'date_added': datetime.datetime.now(),
             'date_modified': datetime.datetime.now()
@@ -191,7 +191,7 @@ def admin_add_user():
         users.insert_one(new_user)
         flash(new_user['email'] + ' user has been added.', 'success')
         return redirect(url_for('admin_users'))
-    return render_template('users.html', all_roles=roles.find(), all_users=users.find())
+    return render_template('user-admin.html', all_roles=roles.find(), all_users=users.find())
 
 @app.route('/admin/delete-user/<user_id>', methods=['GET', 'POST'])
 @login_required
@@ -235,25 +235,146 @@ def admin_update_user(user_id):
             'date_modified': datetime.datetime.now()
             })
         update_user = users.find_one({'_id': ObjectId(user_id)})
-        flash(update_user['email'] + ' has been added.', 'success')
+        flash(update_user['email'] + ' has been updated.', 'success')
         return redirect(url_for('admin_users'))
-    return render_template('users.html', all_roles=roles.find(), all_users=users.find())
+    return render_template('user-admin.html', all_roles=roles.find(), all_users=users.find())
 
 
 
 ##########  Recipes ##########
 
-@app.route('/recipes/new-recipe', methods=['GET'])
+@app.route('/recipes/recipes', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin', 'contributor')
-def new_recipe():
-    return 'Retrieve new recipe page.'
+@roles_required('admin', 'contributor', 'user')
+def admin_recipes():
+    return render_template('recipe-admin.html', all_categories=categories.find(), all_recipes=recipes.find())
 
-@app.route('/recipes/add-recipe', methods=['POST'])
+
+#make first name and last name belong to users that added the recipe
+
+@app.route('/recipes/add-recipe', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin', 'contributor')
 def add_recipe():
-    return 'Add new recipe to database.'
+    if request.method == 'POST':
+        form = request.form
+        
+        recipe_name = recipes.find_one({"recipe_name": request.form['recipe_name']})
+        if recipe_name:
+            flash('This recipe is already registered.', 'warning')
+            return 'This recipe has already been registered.'
+        
+
+        #first_name = users.find_one({"first_name": request.form['first_name']})
+        new_recipe = {
+            'recipe_name': form['recipe_name'],
+            'category': form['category'],
+            'ingredients': form['ingredients'],
+            'preparation': form['preparation'],
+            'notes': form['notes'],
+            'first_name': form["first_name"],
+            'last_name': form['last_name'],
+            'date_added': datetime.datetime.now(),
+            'date_modified': datetime.datetime.now()
+        }
+        recipes.insert_one(new_recipe)
+        flash(new_recipe['recipe_name'] + ' recipe has been added.', 'success')
+        return redirect(url_for('admin_recipes'))
+    return render_template('recipe-admin.html', all_roles=roles.find(), all_users=users.find())
+
+
+@app.route('/recipes/edit-recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def edit_recipe(recipe_id):
+    edit_recipe = recipes.find_one({'_id': ObjectId(recipe_id)})
+    if edit_recipe:
+        return render_template('edit-recipe.html', recipe=edit_recipe, all_roles=roles.find())
+    flash('Recipe not found.', 'warning')
+    return redirect(url_for('admin_recipes'))
+
+
+@app.route('/recipes/update-recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def update_recipe(recipe_id):
+    print('inside update recipe')
+    if request.method == 'POST':
+        
+        form = request.form
+        
+        recipes.update({'_id': ObjectId(recipe_id)},
+            {
+            'recipe_name': form['recipe_name'],
+            'category': form['category'],
+            'ingredients': form['ingredients'],
+            'preparation': form['preparation'],
+            'notes': form['notes'],
+            'first_name': form['first_name'],
+            'last_name': form['last_name'],
+            'date_added': form['date_added'],
+            'date_modified': datetime.datetime.now()
+            })
+        update_recipe = recipes.find_one({'_id': ObjectId(recipe_id)})
+        flash(update_recipe['recipe_name'] + ' has been updated.', 'success')
+        return redirect(url_for('admin_recipes'))
+    return render_template('recipe-admin.html', all_roles=roles.find(), all_recipes=recipes.find())
+
+
+@app.route('/recipes/delete-recipe/<recipe_id>', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def delete_recipe(recipe_id):
+    delete_recipe = recipes.find_one({'_id': ObjectId(recipe_id)})
+    if delete_recipe:
+        recipes.delete_one(delete_recipe)
+        flash(delete_recipe['recipe_name'] + ' has been deleted.', 'warning')
+        return redirect(url_for('admin_recipes'))
+    flash('Recipe not found.', 'warning')
+    return redirect(url_for('admin_recipes'))
+
+
+
+
+##############      Categories     ###############
+@app.route('/recipes/categories', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin', 'contributor', 'user')
+def admin_categories():
+    return render_template('categories-admin.html', all_categories=categories.find())
+
+
+@app.route('/recipes/add-category', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def add_category():
+    if request.method == 'POST':
+        form = request.form
+
+        category_name = categories.find_one({"category_name": request.form['category_name']})
+        if category_name:
+            flash('This category is already registered.', 'warning')
+            return 'This category has already been registered.'
+
+        new_category = {'category_name': form['category_name']}
+        categories.insert_one(new_category)
+        flash(new_category['category_name'] + ' category has been added', 'success')
+        return redirect(url_for('admin_categories'))
+    return render_template('categories-admin.html', all_roles=roles.find(), all_users=users.find())
+
+
+@app.route('/recipes/delete-category/<category_id>', methods=['POST'])
+@login_required
+@roles_required('admin', 'contributor')
+def delete_category(category_id):
+    delete_category = categories.find_one({'_id': ObjectId(category_id)})
+    if delete_category:
+        categories.delete_one(delete_category)
+        flash(delete_category['category_name'] + ' has been deleted.', 'warning')
+        return redirect(url_for('admin_categories'))
+    flash('User not found.', 'warning')
+    return redirect(url_for('admin_categories'))
+
 
 
 

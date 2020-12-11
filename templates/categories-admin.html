@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %} all_categories Administration {% endblock %}
+
+
+{% block body %} 
+
+<h1>Recipe Admin Page</h1>
+<hr>
+<div class="admin_left">
+    <h3 >Food Categories</h3>
+        <form method='POST' action="{{url_for('add_category')}}">
+            <input type="text" name="category_name" placeholder="add new category"><input type="submit" value="Submit">
+        </form>
+    <hr>
+
+
+        <br>
+        {% if all_categories %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Category Name</th>
+
+                </tr>
+            </thead>
+        
+            <tbody>
+                {% for category in all_categories %}
+                <tr>
+        
+                    <td> {{ category['category_name'] }}</td>
+                    
+                    <td>
+                        <form action="{{ url_for('delete_category', category_id=category['_id']) }}" method="POST">
+                            <input type="submit" class="btn btn-danger" value="Delete" />
+                        </form>
+                    </td>
+        
+                   
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+    <br clear="all">
+    
+{% endblock %} 
+

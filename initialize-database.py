@@ -10,6 +10,7 @@ load_dotenv(dotenv_path)
 
 mongo = os.getenv('MONGO')
 
+
 client = pymongo.MongoClient(mongo)
 
 db = client['RecipeApp']
@@ -69,7 +70,7 @@ def initial_database():
     user = add_role('user')
 
     # add users
-    mike = add_user('Aidan', 'Gorny', 'aidan@aidan.com', 'abc123', 'admin')
+    aidan = add_user('Aidan', 'Gorny', 'aidan@aidan.com', 'abc123', 'admin')
 
     # add categories
     main = add_category('Main dishes')

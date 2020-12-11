@@ -36,6 +36,15 @@
             {% else %}
             <a class="nav-link" href="{{ url_for('login')}}">login</a>
             {% endif %}
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Navigate
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="/">Home</a>
+              <a class="dropdown-item" href="/admin/users">Users</a>
+              <a class="dropdown-item" href='/recipes/recipes'>Recipes</a>
+              <a class="dropdown-item" href='/recipes/categories'>Categories</a>
+            </div>
           </li>
         </ul>
 
@@ -98,4 +107,14 @@
     crossorigin="anonymous"></script>
   </div>  
 </body>
+<br><br><br><br><br><br><br><br><br><br>
+<footer class="text-muted">
+  <div class="container">
+    <p class="float-right">
+      <a href="#">Back to top</a>
+    </p>
+    <p>Recipe App @RecipeApp</p>
+    <p>Contact us <a href="aidan-gorny@uiowa.edu">by email!</a></p>
+  </div>
+</footer>
 </html>
